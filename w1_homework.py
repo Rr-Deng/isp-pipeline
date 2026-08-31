@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 '读取图片'
 img=cv2.imread('OIP-C.webp')
@@ -38,6 +39,14 @@ ret1,thresh1=cv2.threshold(blur1,127,255,cv2.THRESH_BINARY)    #手动设定阈�
 thresh2=cv2.adaptiveThreshold(blur1,255,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,11,2)    #自适应阈值  用于光照不均匀，比如手机照片直出图
 ret3,thresh3=cv2.threshold(blur1,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)    #OTSU阈值 用于光照均匀，比如扫描件、文档
 
+'图像形态学操作'
+kernel=cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+erode=cv2.erode(thresh2,kernel,iterations=1)
+dilate=cv2.dilate(thresh2,kernel,iterations=1)
+open_img=cv2.morphologyEx(thresh3,cv2.MORPH_OPEN,kernel)
+close_img=cv2.morphologyEx(thresh2,cv2.MORPH_CLOSE,kernel)
+gradient_img=cv2.morphologyEx(thresh2,cv2.MORPH_GRADIENT,kernel)
+
 'ROI'
 roi=img[105:200,105:200]
 roi[:,:]=[66,66,66]
@@ -57,6 +66,11 @@ cv2.imshow('blur1', blur1)
 #cv2.imshow('blur2', blur2)
 #cv2.imshow('blur3', blur3)  
 #cv2.imshow('city',img1)
+cv2.imshow('erode',erode)
+cv2.imshow('dilate',dilate)
+cv2.imshow('open_img',open_img)
+cv2.imshow('close_img',close_img)
+cv2.imshow('gradient_img',gradient_img)
 
 '等待按键'
 cv2.waitKey(0) 
@@ -71,3 +85,8 @@ cv2.imwrite('thresh1.png',thresh1)
 cv2.imwrite('thresh2.png',thresh2)
 cv2.imwrite('thresh3.png',thresh3)
 cv2.imwrite('city.jpg',img1)
+cv2.imwrite('erode.png',erode)
+cv2.imwrite('dilate.png',dilate)
+cv2.imwrite('open_img.png',open_img)
+cv2.imwrite('close_img.png',close_img)
+cv2.imwrite('gradient_img.png',gradient_img)
