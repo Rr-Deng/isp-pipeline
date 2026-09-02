@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 '读取图片'
 img=cv2.imread('OIP-C.webp')
@@ -61,11 +62,69 @@ sharpened=gray1-laplacian_sh     #加上绝对值，或者减去原始值,为后
 laplacian=np.absolute(laplacian)    #取绝对值，为后面归一化做准备
 laplacian_sh=np.absolute(laplacian_sh)    #取绝对值，为后面归一化做准备
 laplacian_edge=np.uint8(laplacian/laplacian.max()*255)  #归一化，防止绝对值会超出255上限，转为无符号的八位整数(像素值必须为整数)
-laplacian_sh=np.uint8(laplacian_sh/laplacian_sh.max()*255)  #归一化，防止绝对值会超出255上限，转为无符号的八位整数(像素值必须为整数)
+laplacian_sh_edge=np.uint8(laplacian_sh/laplacian_sh.max()*255)  #归一化，防止绝对值会超出255上限，转为无符号的八位整数(像素值必须为整数)
 sharpened=np.clip(sharpened,0,255).astype(np.uint8)    #锐化运算结果演示，放大相邻像素值的差异，原理是将原始图像减去laplacian提取的边缘细节
 
 '图像轮廓检测，使用二值化图像--找的是连续的像素点，即闭合的一条曲线'
+contours,hierarchy=cv2.findContours(canny_edge,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)    #寻找canny中所有轮廓，contours是轮廓列表，hierarchy是轮廓层级关系
+output=np.zeros_like(img1)    #创建全黑的图像，用于绘制轮廓
+cv2.drawContours(output,contours,-1,(255,0,0),2)   #绘制所有轮廓
+output1=output.copy()       #复制一张，后面对比用
+output2=output.copy()       #复制一张，后面对比用
+output3=output.copy()       #复制一张，后面对比用
+output4=output.copy()       #复制一张，后面对比用
+for contour in contours:   #遍历每个轮廓
+    #计算轮廓面积和周长
+    area=cv2.contourArea(contour)
+    length=cv2.arcLength(contour,True)
+    print(area,length)
+    #绘制轮廓的边界矩形
+    x,y,w,h=cv2.boundingRect(contour)
+    cv2.rectangle(output1,(x,y),(x+w,y+h),(0,255,0),2)
+    #绘制轮廓的最小面积矩形
+    rect=cv2.minAreaRect(contour)
+    box=cv2.boxPoints(rect)
+    box=np.int0(box)
+    cv2.drawContours(output2,[box],0,(0,0,255),2)
+    #绘制轮廓的最小外接圆
+    (x,y),radius=cv2.minEnclosingCircle(contour)
+    center=(int(x),int(y))
+    radius=int(radius)
+    cv2.circle(output3,center,radius,(0,255,255),2)
+    #绘制轮廓的近似多边形
+    epsilon=0.01*cv2.arcLength(contour,True)
+    approx=cv2.approxPolyDP(contour,epsilon,True)
+    cv2.drawContours(output4,[approx],0,(255,255,0),2)
 
+'图像直方图'
+hist=cv2.calcHist([gray1],[0],None,[256],[0,256])    #计算灰度图直方图，[gray1]是输入图像，[0]是通道索引，None是掩码，[256]是直方图bin数（分为几个区间），[0,256]是直方图范围
+
+plt.plot(hist)
+plt.title('Grayscale Histogram')
+plt.xlabel('Pixel Value')
+plt.ylabel('Frequency')
+plt.show()
+
+equalized_img=cv2.equalizeHist(gray1)    #通过重新分配直方图像素强度来增强图片对比度（让像素强度分布更加均匀）
+
+colors=('b','g','r')
+for i,color in enumerate(colors):    #enumerate()函数同时获取索引和元素
+    hist1=cv2.calcHist([img1],[i],None,[256],[0,256])    #计算每个通道的直方图
+    plt.plot(hist1,color=color)
+    
+plt.title("Color Histogram")
+plt.xlabel("Pixel Intensity")
+plt.ylabel("Pixel Count")
+plt.show()
+
+b,g,r=cv2.split(img1)
+b_eq=cv2.equalizeHist(b)
+g_eq=cv2.equalizeHist(g)
+r_eq=cv2.equalizeHist(r)
+equalize_img1=cv2.merge((b_eq,g_eq,r_eq))
+
+similarity=cv2.compareHist(hist,hist1,cv2.HISTCMP_CORREL)
+print("histgram similarity:",similarity)
 
 'ROI'
 roi=img[105:200,105:200]
@@ -74,7 +133,7 @@ roi[50:150,50:150]=[0, 255, 0]
 img[50:100,50:100]=[0,150,0]
 
 '显示图片'
-#cv2.imshow('my image',img)
+cv2.imshow('my image',img1)
 #cv2.imshow('gray',gray)
 cv2.imshow('gray1',gray1)
 #cv2.imshow('result',result2)
@@ -92,10 +151,17 @@ cv2.imshow('gray1',gray1)
 #cv2.imshow('close_morph',close_morph)
 #cv2.imshow('gradient_morph',gradient_morph)
 cv2.imshow('canny_edge',canny_edge)
-cv2.imshow('sobel_edge',sobel_edge)
-cv2.imshow('laplacian_edge',laplacian_edge)
-cv2.imshow('laplacian_sh',laplacian_sh)
-cv2.imshow('sharpened',sharpened)
+#cv2.imshow('sobel_edge',sobel_edge)
+#cv2.imshow('laplacian_edge',laplacian_edge)
+#cv2.imshow('laplacian_sh_edge',laplacian_sh_edge)
+#cv2.imshow('sharpened',sharpened)
+cv2.imshow('output',output)  
+cv2.imshow('bounding_rect',output1)
+cv2.imshow('min_area_rect',output2)
+cv2.imshow('min_enclosing_circle',output3)
+cv2.imshow('approx',output4)
+cv2.imshow('equalized_img',equalized_img)
+cv2.imshow('equalize_img1',equalize_img1)
 
 '等待按键'
 cv2.waitKey(0) 
@@ -118,5 +184,12 @@ cv2.imwrite('gradient_morph.png',gradient_morph)
 cv2.imwrite('canny_edge.png',canny_edge)
 cv2.imwrite('sobel_edge.png',sobel_edge)
 cv2.imwrite('laplacian_edge.png',laplacian_edge)
-cv2.imwrite('laplacian_sh.png',laplacian_sh)
+cv2.imwrite('laplacian_sh_edge.png',laplacian_sh_edge)
 cv2.imwrite('sharpened.png',sharpened)
+cv2.imwrite('output.png',output)
+cv2.imwrite('bounding_rect.png',output1)
+cv2.imwrite('min_area_rect.png',output2)
+cv2.imwrite('min_enclosing_circle.png',output3)
+cv2.imwrite('approx.png',output4)
+cv2.imwrite('equalized_img.png',equalized_img)
+cv2.imwrite('equalize_img1.png',equalize_img1)
