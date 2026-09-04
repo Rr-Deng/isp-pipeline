@@ -117,13 +117,13 @@ plt.xlabel("Pixel Intensity")
 plt.ylabel("Pixel Count")
 plt.show()
 
-b,g,r=cv2.split(img1)
+b,g,r=cv2.split(img1)        #将通道分离，然后分别直方图均衡化
 b_eq=cv2.equalizeHist(b)
 g_eq=cv2.equalizeHist(g)
 r_eq=cv2.equalizeHist(r)
 equalize_img1=cv2.merge((b_eq,g_eq,r_eq))
 
-similarity=cv2.compareHist(hist,hist1,cv2.HISTCMP_CORREL)
+similarity=cv2.compareHist(hist,hist1,cv2.HISTCMP_CORREL)      #比较两个直方图的相似度，cv2.HISTCMP_CORREL是相关系数，0-1之间，1表示完全相似，0表示完全相反
 print("histgram similarity:",similarity)
 
 'ROI'
