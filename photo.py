@@ -29,6 +29,9 @@ result2=cv2.addWeighted(img,0.5,flipimg,0.5,0.5)
 gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 gray1=cv2.cvtColor(img1,cv2.COLOR_BGR2GRAY)
 
+'HSV空间'
+hsv=cv2.cvtColor(img1,cv2.COLOR_BGR2HSV)
+
 '滤波去噪，模糊图片，基本使用灰度图，美颜磨皮等操作使用彩色图'
 blur=cv2.blur(gray1,(5,5))    #均值滤波  马赛克
 blur1=cv2.GaussianBlur(gray1,(5,5),0)    #高斯滤波  通用，边缘识别前的预处理
